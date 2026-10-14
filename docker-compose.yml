@@ -1,0 +1,44 @@
+services:
+  mqtt-proxy:
+    image: ghcr.io/ln4cy/mqtt-proxy:latest
+    container_name: mqtt-proxy
+    restart: unless-stopped
+    privileged: true
+    network_mode: host
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+    environment:
+      - INTERFACE_TYPE=serial
+      - SERIAL_PORT=/dev/ttyACM0
+      - MQTT_BROKER=${MQTT_BROKER}
+      - MQTT_PORT=${MQTT_PORT}
+      - MQTT_USERNAME=${MQTT_USERNAME}
+      - MQTT_PASSWORD=${MQTT_PASSWORD}
+      - MQTT_ROOT_TOPIC=${MQTT_ROOT_TOPIC}
+    env_file:
+      - .env
+
+  subscriber:
+    image: eclipse-mosquitto
+    container_name: mqtt-sub
+    restart: unless-stopped
+    network_mode: host
+    command: mosquitto_sub -h ${MQTT_BROKER} -p ${MQTT_PORT} -u ${MQTT_USERNAME} -P ${MQTT_PASSWORD} -t "${MQTT_ROOT_TOPIC}/2/e/#" -v
+    env_file:
+      - .env
+
+  sender:
+    build: ./sender
+    container_name: mqtt-sender
+    restart: unless-stopped
+    network_mode: host
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SERIAL_PORT=/dev/ttyACM0
+      - SCHEDULED_TEXT=${SCHEDULED_TEXT}
+      - CHANNEL_INDEX=${CHANNEL_INDEX}
+    env_file:
+      - .env
