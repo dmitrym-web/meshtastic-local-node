@@ -356,7 +356,7 @@ make ping
 Проект распространяется бесплатно под лицензией MIT. Если он оказался полезен и ты хочешь поддержать разработку — можешь сделать это через Boosty.
 
 [![Boosty](https://img.shields.io/badge/Boosty-подписаться-orange)](https://boosty.to/technologyforyou)
-[![Разовый донат](https://img.shields.io/badge/Boosty-разовый%20донат-blue)](https://boosty.to/technologyforyou/single-payment/donation/834962/target?share=target_link)
+[![Разовый донат](https://img.shields.io/badge/Boosty-разовый%20донат-blue)](https://boosty.to/technologyforyou/donate)
 
 На Boosty можно оформить подписку или разовый донат. Все средства идут на развитие проекта: оплату серверов, закупку железа для тестирования, время на разработку.
 
@@ -380,7 +380,7 @@ make ping
 
 ### Текущий сбор
 
-[![Цель](https://img.shields.io/badge/Цель-сервер%20для%20брокера-blueviolet)](https://boosty.to/technologyforyou/single-payment/donation/834962/target?share=target_link)
+[![Цель](https://img.shields.io/badge/Цель-сервер%20для%20брокера-blueviolet)](https://boosty.to/technologyforyou/donate)
 
 Оплата VPS, на котором работает MQTT-брокер проекта и тестовая площадка. Шесть месяцев стабильной работы без перебоев.
 
