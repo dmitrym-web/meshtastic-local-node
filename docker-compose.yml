@@ -6,7 +6,7 @@ services:
     privileged: true
     network_mode: host
     devices:
-      - /dev/ttyACM0:/dev/ttyACM0
+      - ${SERIAL_PORT}:/dev/ttyACM0
     environment:
       - INTERFACE_TYPE=serial
       - SERIAL_PORT=/dev/ttyACM0
@@ -19,11 +19,10 @@ services:
       - .env
 
   subscriber:
-    image: eclipse-mosquitto
+    build: ./subscriber
     container_name: mqtt-sub
     restart: unless-stopped
     network_mode: host
-    command: mosquitto_sub -h ${MQTT_BROKER} -p ${MQTT_PORT} -u ${MQTT_USERNAME} -P ${MQTT_PASSWORD} -t "${MQTT_ROOT_TOPIC}/2/e/#" -v
     env_file:
       - .env
 
@@ -33,7 +32,7 @@ services:
     restart: unless-stopped
     network_mode: host
     devices:
-      - /dev/ttyACM0:/dev/ttyACM0
+      - ${SERIAL_PORT}:/dev/ttyACM0
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
