@@ -169,7 +169,7 @@ sudo chmod 666 /dev/ttyACM0
 ### 1. Клонировать проект
 
 ```bash
-git clone <адрес-репозитория> meshtastic-local-node
+git clone https://github.com/dmitrym-web/meshtastic-local-node
 cd meshtastic-local-node
 ```
 
@@ -355,15 +355,17 @@ make ping
 
 Проект распространяется бесплатно под лицензией MIT. Если он оказался полезен и ты хочешь поддержать разработку — можешь сделать это через Boosty.
 
-[![Boosty](https://img.shields.io/badge/Boosty-поддержать-orange)](https://boosty.to/твой_логин)
+[![Boosty](https://img.shields.io/badge/Boosty-поддержать-orange)](https://boosty.to/technologyforyou)
 
 На Boosty можно оформить разовый донат или подписку. Все средства идут на развитие проекта: оплату серверов, закупку железа для тестирования, время на разработку.
 
-### Что даёт поддержка
+### Уровни подписки
 
-- Проект остаётся open-source и бесплатным для всех.
-- Разработка идёт быстрее: тестирование на реальных нодах, новые функции.
-- Ты получаешь приоритет в ответах на вопросы и учёт пожеланий.
+| Уровень | Цена | Что входит |
+| :--- | :--- | :--- |
+| **Supporter** | 150 ₽ / мес | Спасибо за поддержку. Проект остаётся бесплатным и открытым. |
+| **Contributor** | 400 ₽ / мес | Всё из Supporter + приоритет в ответах на вопросы. |
+| **Patron** | 1000 ₽ / мес | Всё из Contributor + заметное упоминание на странице Boosty и в README. |
 
 ### Другие способы
 
@@ -372,6 +374,10 @@ make ping
 - **Звезда на GitHub** — помогает проекту стать заметнее.
 - **Баг-репорт** — сообщи о проблеме, это тоже вклад.
 - **Pull request** — если умеешь в код, помоги с разработкой.
+
+### Обсуждение
+
+Чат проекта в Telegram: [![Telegram](https://img.shields.io/badge/Telegram-чат-blue)](https://t.me/meshtastic_nvrsk/396)
 
 [⬆ Наверх](#meshtastic-local-node)
 
@@ -419,9 +425,9 @@ make ping
 
 ### Как заказать
 
-Все заказы — через Telegram-группу:
+Все заказы — через Telegram:
 
-[![Telegram](https://img.shields.io/badge/Telegram-заказать-blue)](https://t.me/твоя_группа)
+[![Telegram](https://img.shields.io/badge/Telegram-заказать-blue)](https://t.me/meshtastic_nvrsk/396)
 
 Порядок работы:
 1. Опиши, какая у тебя нода и что нужно.
