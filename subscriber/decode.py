@@ -15,6 +15,11 @@ ROOT = os.environ["MQTT_ROOT_TOPIC"]
 CHANNEL_NAME = os.environ.get("CHANNEL", "LongFast")
 CHANNEL_KEY = os.environ.get("CHANNEL_KEY", "AQ==")
 
+LOG_TEXT     = os.environ.get("LOG_TEXT", "true").lower() == "true"
+LOG_POSITION = os.environ.get("LOG_POSITION", "true").lower() == "true"
+LOG_TELEMETRY= os.environ.get("LOG_TELEMETRY", "false").lower() == "true"
+LOG_NODEINFO = os.environ.get("LOG_NODEINFO", "true").lower() == "true"
+
 KEY = fromPSK(CHANNEL_KEY)
 CACHE_FILE = "/data/nodes.json"
 NODES = {}
@@ -83,19 +88,22 @@ def on_message(client, userdata, msg):
             if name and NODES.get(from_node) != name:
                 NODES[from_node] = name
                 save_cache()
+            if LOG_NODEINFO:
                 print(f"[{CHANNEL_NAME}] {sender}: NODEINFO ({name})", flush=True)
-            else:
-                print(f"[{CHANNEL_NAME}] {sender}: NODEINFO", flush=True)
+                
         elif data.portnum == portnums_pb2.PortNum.TEXT_MESSAGE_APP:
-            text = data.payload.decode("utf-8", errors="replace")
-            print(f"[{CHANNEL_NAME}] {sender}: {text}", flush=True)
+            if LOG_TEXT:
+                text = data.payload.decode("utf-8", errors="replace")
+                print(f"[{CHANNEL_NAME}] {sender}: {text}", flush=True)
+                
         elif data.portnum == portnums_pb2.PortNum.POSITION_APP:
-            print(f"[{CHANNEL_NAME}] {sender}: POSITION", flush=True)
+            if LOG_POSITION:
+                print(f"[{CHANNEL_NAME}] {sender}: POSITION", flush=True)
+                
         elif data.portnum == portnums_pb2.PortNum.TELEMETRY_APP:
-            print(f"[{CHANNEL_NAME}] {sender}: TELEMETRY", flush=True)
-        else:
-            name = portnums_pb2.PortNum.Name(data.portnum)
-            print(f"[{CHANNEL_NAME}] {sender}: {name}", flush=True)
+            if LOG_TELEMETRY:
+                print(f"[{CHANNEL_NAME}] {sender}: TELEMETRY", flush=True)
+                
     except Exception as e:
         print(f"Decode error: {e}", flush=True)
 

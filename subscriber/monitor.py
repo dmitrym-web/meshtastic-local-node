@@ -17,6 +17,11 @@ CHANNEL     = os.environ.get("CHANNEL", "LongFast")
 CHANNEL_KEY = os.environ.get("CHANNEL_KEY", "AQ==")
 NODE_ID     = os.environ.get("NODE_ID", "")
 
+LOG_TEXT     = os.environ.get("LOG_TEXT", "true").lower() == "true"
+LOG_POSITION = os.environ.get("LOG_POSITION", "true").lower() == "true"
+LOG_TELEMETRY= os.environ.get("LOG_TELEMETRY", "false").lower() == "true"
+LOG_NODEINFO = os.environ.get("LOG_NODEINFO", "true").lower() == "true"
+
 KEY_FROM_PSK = base64.b64decode(fromPSK(CHANNEL_KEY))
 KEY_DIRECT   = base64.b64decode("1PG7OiApB1nwvP+rz05pAQ==")
 
@@ -52,13 +57,11 @@ def decrypt(mp):
     to  = mp.to
     pid = mp.id
     enc = mp.encrypted
-
     nonces = [
         ("id+from", pid.to_bytes(8, "little") + fn.to_bytes(8, "little")),
         ("id+to",   pid.to_bytes(8, "little") + to.to_bytes(8, "little")),
     ]
     keys = [("psk", KEY_FROM_PSK), ("dir", KEY_DIRECT)]
-
     for nlabel, nonce in nonces:
         for klabel, key in keys:
             try:
@@ -126,8 +129,11 @@ def on_message(c, u, msg):
             return
 
         pn = data.portnum
+        
         if pn == portnums_pb2.PortNum.TEXT_MESSAGE_APP:
-            out(direction, sender, data.payload.decode("utf-8", errors="replace"), extra)
+            if LOG_TEXT:
+                out(direction, sender, data.payload.decode("utf-8", errors="replace"), extra)
+                
         elif pn == portnums_pb2.PortNum.NODEINFO_APP:
             user = mesh_pb2.User()
             user.ParseFromString(data.payload)
@@ -135,17 +141,19 @@ def on_message(c, u, msg):
             if name and NODES.get(from_node) != name:
                 NODES[from_node] = name
                 save_cache()
-            out(direction, sender, f"{D}NODEINFO{R} {name or ''}", extra)
+            if LOG_NODEINFO:
+                out(direction, sender, f"{D}NODEINFO{R} {name or ''}", extra)
+                
         elif pn == portnums_pb2.PortNum.POSITION_APP:
-            pos = mesh_pb2.Position()
-            pos.ParseFromString(data.payload)
-            out(direction, sender, f"{D}POSITION {pos.latitude_i/1e7:.5f},{pos.longitude_i/1e7:.5f}{R}", extra)
+            if LOG_POSITION:
+                pos = mesh_pb2.Position()
+                pos.ParseFromString(data.payload)
+                out(direction, sender, f"{D}POSITION {pos.latitude_i/1e7:.5f},{pos.longitude_i/1e7:.5f}{R}", extra)
+                
         elif pn == portnums_pb2.PortNum.TELEMETRY_APP:
-            out(direction, sender, f"{D}TELEMETRY{R}", extra)
-        elif pn == portnums_pb2.PortNum.ROUTING_APP:
-            out(direction, sender, f"{D}ROUTING_APP{R}", extra)
-        else:
-            out(direction, sender, f"{D}{portnums_pb2.PortNum.Name(pn)}{R}", extra)
+            if LOG_TELEMETRY:
+                out(direction, sender, f"{D}TELEMETRY{R}", extra)
+                
     except Exception as e:
         print(f"{RD}parse error: {e}{R}", flush=True)
 
