@@ -30,6 +30,20 @@ services:
     env_file:
       - .env
 
+  meshmonitor-init:
+    image: alpine:latest
+    container_name: meshmonitor-init
+    network_mode: host
+    volumes:
+      - ./meshmonitor-secrets:/secrets
+      - ./scripts/init-meshmonitor.sh:/init.sh:ro
+    environment:
+      - SERIAL_BRIDGE_PORT=${SERIAL_BRIDGE_PORT}
+    command: ["sh", "-c", "apk add --no-cache curl jq netcat-openbsd && sh /init.sh"]
+    depends_on:
+      - meshmonitor
+    restart: "no"
+
   mqtt-proxy:
     image: ghcr.io/ln4cy/mqtt-proxy:latest
     container_name: mqtt-proxy
@@ -47,7 +61,8 @@ services:
     env_file:
       - .env
     depends_on:
-      - meshmonitor
+      meshmonitor-init:
+        condition: service_completed_successfully
 
   subscriber:
     build: ./subscriber
@@ -67,4 +82,5 @@ services:
     env_file:
       - .env
     depends_on:
-      - meshmonitor
+      meshmonitor-init:
+        condition: service_completed_successfully
