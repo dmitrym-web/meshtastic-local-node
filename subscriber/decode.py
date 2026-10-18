@@ -1,4 +1,5 @@
 import os
+import json
 import base64
 import paho.mqtt.client as mqtt
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -15,25 +16,40 @@ CHANNEL_NAME = os.environ.get("CHANNEL", "LongFast")
 CHANNEL_KEY = os.environ.get("CHANNEL_KEY", "AQ==")
 
 KEY = fromPSK(CHANNEL_KEY)
-
+CACHE_FILE = "/data/nodes.json"
 NODES = {}
 
+def load_cache():
+    global NODES
+    if os.path.exists(CACHE_FILE):
+        try:
+            with open(CACHE_FILE, "r") as f:
+                data = json.load(f)
+                NODES = {int(k): v for k, v in data.items()}
+        except Exception as e:
+            print(f"Cache load error: {e}", flush=True)
+    else:
+        save_cache()
+
+def save_cache():
+    try:
+        os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
+        with open(CACHE_FILE, "w") as f:
+            json.dump(NODES, f)
+    except Exception as e:
+        print(f"Cache save error: {e}", flush=True)
 
 def decrypt_packet(mesh_packet):
     key_bytes = base64.b64decode(KEY)
     from_node = getattr(mesh_packet, "from")
     packet_id = getattr(mesh_packet, "id")
-
     nonce = packet_id.to_bytes(8, "little") + from_node.to_bytes(8, "little")
-
     cipher = Cipher(algorithms.AES(key_bytes), modes.CTR(nonce), backend=default_backend())
     decryptor = cipher.decryptor()
     decrypted_bytes = decryptor.update(getattr(mesh_packet, "encrypted")) + decryptor.finalize()
-
     data = mesh_pb2.Data()
     data.ParseFromString(decrypted_bytes)
     return data
-
 
 def node_label(from_node):
     name = NODES.get(from_node)
@@ -41,12 +57,10 @@ def node_label(from_node):
         return name
     return f"!{from_node:08x}"
 
-
 def on_connect(client, userdata, flags, reason_code, properties=None):
     topic = f"{ROOT}/2/e/{CHANNEL_NAME}/#"
     client.subscribe(topic)
     print(f"Subscribed to {topic}", flush=True)
-
 
 def on_message(client, userdata, msg):
     try:
@@ -66,8 +80,9 @@ def on_message(client, userdata, msg):
             user = mesh_pb2.User()
             user.ParseFromString(data.payload)
             name = user.long_name or user.short_name
-            if name:
+            if name and NODES.get(from_node) != name:
                 NODES[from_node] = name
+                save_cache()
                 print(f"[{CHANNEL_NAME}] {sender}: NODEINFO ({name})", flush=True)
             else:
                 print(f"[{CHANNEL_NAME}] {sender}: NODEINFO", flush=True)
@@ -84,7 +99,7 @@ def on_message(client, userdata, msg):
     except Exception as e:
         print(f"Decode error: {e}", flush=True)
 
-
+load_cache()
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 client.username_pw_set(USERNAME, PASSWORD)
 client.on_connect = on_connect

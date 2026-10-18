@@ -2,19 +2,24 @@ DOCKER_COMPOSE = docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help env up down logs sub-log recreate send send-at send-every set-position ping stop list
+.PHONY: help env detect-node up down logs sub-log monitor recreate send send-at send-every set-position ping stop list
 
 help: ## Показать список команд
 	@echo "Доступные команды:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  make %-15s %s\n", $$1, $$2}'
 
-env: ## Создать .env из .env.example
-	@if [ -f .env ]; then echo ".env уже существует"; exit 0; fi
+env: ## Создать .env и определить ноду
+	@if [ -f .env ]; then echo ".env уже существует"; exit 1; fi
 	@cp .env.example .env
-	@echo ".env создан"
+	@bash scripts/detect-node.sh
+
+detect-node: ## Определить ноду и обновить .env
+	@bash scripts/detect-node.sh
 
 up: ## Собрать и запустить
+	@mkdir -p meshmonitor-data
+	@mkdir -p subscriber-data
 	${DOCKER_COMPOSE} up -d --build --remove-orphans
 
 down: ## Остановить
@@ -26,7 +31,10 @@ logs: ## Логи прокси
 sub-log: ## Входящие сообщения из MQTT
 	${DOCKER_COMPOSE} logs -f subscriber
 
-recreate: ## Пересоздать контейнеры с новыми параметрами
+monitor: ## Мониторинг трафика в реальном времени
+	@docker exec -it mqtt-sub python3 /monitor.py
+
+recreate: ## Пересоздать контейнеры
 	${DOCKER_COMPOSE} down --remove-orphans
 	${DOCKER_COMPOSE} up -d --build --remove-orphans
 

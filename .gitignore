@@ -1,2 +1,5 @@
 .idea
 .env
+local/
+meshmonitor-data/
+subscriber-data/

@@ -1,15 +1,44 @@
 services:
-  mqtt-proxy:
-    image: ghcr.io/ln4cy/mqtt-proxy:latest
-    container_name: mqtt-proxy
+  serial-bridge:
+    image: ghcr.io/yeraze/meshtastic-serial-bridge:latest
+    container_name: meshtastic-serial-bridge
     restart: unless-stopped
     privileged: true
     network_mode: host
     devices:
       - ${SERIAL_PORT}:/dev/ttyACM0
     environment:
-      - INTERFACE_TYPE=serial
-      - SERIAL_PORT=/dev/ttyACM0
+      - SERIAL_DEVICE=/dev/ttyACM0
+      - TCP_PORT=${SERIAL_BRIDGE_PORT}
+    env_file:
+      - .env
+
+  meshmonitor:
+    image: ghcr.io/yeraze/meshmonitor:latest
+    container_name: meshmonitor
+    restart: unless-stopped
+    network_mode: host
+    volumes:
+      - ./meshmonitor-data:/data
+    environment:
+      - MESHTASTIC_NODE_IP=localhost
+      - MESHTASTIC_NODE_PORT=${SERIAL_BRIDGE_PORT}
+      - PORT=${MESHMONITOR_PORT}
+      - COMPOSE_PROJECT_NAME=meshmonitor
+    depends_on:
+      - serial-bridge
+    env_file:
+      - .env
+
+  mqtt-proxy:
+    image: ghcr.io/ln4cy/mqtt-proxy:latest
+    container_name: mqtt-proxy
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      - INTERFACE_TYPE=tcp
+      - TCP_NODE_HOST=localhost
+      - TCP_NODE_PORT=${MESHMONITOR_VIRTUAL_NODE_PORT}
       - MQTT_BROKER=${MQTT_BROKER}
       - MQTT_PORT=${MQTT_PORT}
       - MQTT_USERNAME=${MQTT_USERNAME}
@@ -17,12 +46,16 @@ services:
       - MQTT_ROOT_TOPIC=${MQTT_ROOT_TOPIC}
     env_file:
       - .env
+    depends_on:
+      - meshmonitor
 
   subscriber:
     build: ./subscriber
     container_name: mqtt-sub
     restart: unless-stopped
     network_mode: host
+    volumes:
+      - ./subscriber-data:/data
     env_file:
       - .env
 
@@ -31,13 +64,7 @@ services:
     container_name: mqtt-sender
     restart: unless-stopped
     network_mode: host
-    devices:
-      - ${SERIAL_PORT}:/dev/ttyACM0
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - SERIAL_PORT=/dev/ttyACM0
-      - SCHEDULED_TEXT=${SCHEDULED_TEXT}
-      - CHANNEL_INDEX=${CHANNEL_INDEX}
     env_file:
       - .env
+    depends_on:
+      - meshmonitor
