@@ -79,6 +79,12 @@ services:
     container_name: mqtt-sender
     restart: unless-stopped
     network_mode: host
+    environment:
+      - TZ=${TZ:-Europe/Moscow}
+    volumes:
+      - ./jobs:/app/jobs
+      - ./scripts:/app/scripts:ro
+      - /etc/localtime:/etc/localtime:ro
     env_file:
       - .env
     depends_on:

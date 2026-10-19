@@ -2,7 +2,9 @@
 echo "Введите имя задания для удаления:"
 read -r NAME
 
-TAG="meshtastic-local:$NAME"
-crontab -l 2>/dev/null | grep -v "# $TAG\$" | crontab -
-rm -f "/tmp/scheduled-$NAME.txt"
-echo "Задание '$NAME' удалено"
+if [ -f "jobs/$NAME.json" ]; then
+  rm -f "jobs/$NAME.json"
+  echo "Задание '$NAME' удалено"
+else
+  echo "Задание '$NAME' не найдено"
+fi

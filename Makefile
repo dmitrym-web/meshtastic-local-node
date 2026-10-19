@@ -21,6 +21,7 @@ up: ## Собрать и запустить
 	@mkdir -p meshmonitor-data
 	@mkdir -p subscriber-data
 	@mkdir -p meshmonitor-secrets
+	@mkdir -p jobs
 	${DOCKER_COMPOSE} up -d --build --remove-orphans
 
 down: ## Остановить
