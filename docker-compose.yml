@@ -10,6 +10,7 @@ services:
     environment:
       - SERIAL_DEVICE=/dev/ttyACM0
       - TCP_PORT=${SERIAL_BRIDGE_PORT}
+      - TZ=${TZ:-Europe/Moscow}
     env_file:
       - .env
 
@@ -25,6 +26,7 @@ services:
       - MESHTASTIC_NODE_PORT=${SERIAL_BRIDGE_PORT}
       - PORT=${MESHMONITOR_PORT}
       - COMPOSE_PROJECT_NAME=meshmonitor
+      - TZ=${TZ:-Europe/Moscow}
     depends_on:
       - serial-bridge
     env_file:
@@ -39,6 +41,7 @@ services:
       - ./scripts/init-meshmonitor.sh:/init.sh:ro
     environment:
       - SERIAL_BRIDGE_PORT=${SERIAL_BRIDGE_PORT}
+      - TZ=${TZ:-Europe/Moscow}
     command: ["sh", "-c", "apk add --no-cache curl jq netcat-openbsd && sh /init.sh"]
     depends_on:
       - meshmonitor
@@ -58,6 +61,7 @@ services:
       - MQTT_USERNAME=${MQTT_USERNAME}
       - MQTT_PASSWORD=${MQTT_PASSWORD}
       - MQTT_ROOT_TOPIC=${MQTT_ROOT_TOPIC}
+      - TZ=${TZ:-Europe/Moscow}
     env_file:
       - .env
     depends_on:
