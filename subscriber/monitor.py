@@ -102,9 +102,9 @@ def on_connect(c, u, f, rc, p=None):
     else:
         print(f"{RD}Connection failed with code {rc}{R}", flush=True)
 
-# ИСПРАВЛЕНО: добавлен аргумент flags (f)
 def on_disconnect(c, u, f, rc, p=None):
-    print(f"{RD}Disconnected from broker! Reason code: {rc}{R}", flush=True)
+    if getattr(rc, 'value', rc) != 0:
+        print(f"{RD}Disconnected from broker! Reason code: {rc}{R}", flush=True)
 
 def on_message(c, u, msg):
     if msg.topic.endswith("/local/sent"):

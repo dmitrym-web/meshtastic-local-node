@@ -70,6 +70,10 @@ def on_connect(client, userdata, flags, reason_code, properties=None):
     client.subscribe(topic)
     print(f"Subscribed to {topic}", flush=True)
 
+def on_disconnect(client, userdata, flags, reason_code, properties=None):
+    if getattr(reason_code, 'value', reason_code) != 0:
+        print(f"Disconnected from broker! Reason code: {reason_code}.", flush=True)
+
 def on_message(client, userdata, msg):
     try:
         envelope = mqtt_pb2.ServiceEnvelope()
@@ -116,6 +120,7 @@ client_id = f"dec-{uuid.uuid4().hex[:8]}"
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id, clean_session=False)
 client.username_pw_set(USERNAME, PASSWORD)
 client.on_connect = on_connect
+client.on_disconnect = on_disconnect
 client.on_message = on_message
 client.connect(BROKER, PORT, 60)
 client.loop_forever()
