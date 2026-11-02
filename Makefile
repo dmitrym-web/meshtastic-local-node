@@ -2,7 +2,7 @@ DOCKER_COMPOSE = docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help env detect-node up down logs sub-log monitor recreate send send-at send-every set-position ping stop list
+.PHONY: help env detect-node up down logs sub-log monitor recreate send send-at send-every set-position ping stop list backup restore
 
 help: ## Показать список команд
 	@echo "Доступные команды:"
@@ -24,6 +24,7 @@ up: ## Собрать и запустить
 	@mkdir -p subscriber-data
 	@mkdir -p meshmonitor-secrets
 	@mkdir -p jobs
+	@mkdir -p backups
 	${DOCKER_COMPOSE} up -d --build --remove-orphans
 
 down: ## Остановить
@@ -62,3 +63,9 @@ stop: ## Удалить задание по имени
 
 list: ## Показать активные задания
 	@bash scripts/list.sh
+
+backup: ## Создать архивы (интерактивно)
+	@bash scripts/backup.sh
+
+restore: ## Восстановить из архива (интерактивно)
+	@bash scripts/restore.sh
