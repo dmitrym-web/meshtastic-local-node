@@ -12,6 +12,8 @@ help: ## Показать список команд
 env: ## Создать .env и определить ноду
 	@if [ -f .env ]; then echo ".env уже существует"; exit 1; fi
 	@cp .env.example .env
+	@sed -i "s/^PUID=.*/PUID=$$(id -u)/" .env
+	@sed -i "s/^PGID=.*/PGID=$$(id -g)/" .env
 	@bash scripts/detect-node.sh
 
 detect-node: ## Определить ноду и обновить .env

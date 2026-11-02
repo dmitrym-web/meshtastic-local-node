@@ -1,6 +1,7 @@
 import os
 import json
 import base64
+import uuid
 from datetime import datetime
 import paho.mqtt.client as mqtt
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
@@ -49,6 +50,8 @@ def save_cache():
         os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
         with open(CACHE_FILE, "w") as f:
             json.dump(NODES, f)
+        st = os.stat("/data")
+        os.chown(CACHE_FILE, st.st_uid, st.st_gid)
     except Exception as e:
         print(f"{RD}Cache save error: {e}{R}", flush=True)
 
@@ -88,13 +91,20 @@ def out(direction, sender, text, extra=""):
     print(f"{D}{t}{R} {tag} {arrow} {B}{sender:<12}{R} {text} {D}{extra}{R}", flush=True)
 
 def on_connect(c, u, f, rc, p=None):
-    topic = f"{ROOT}/2/e/{CHANNEL}/#"
-    log_topic = f"{ROOT}/2/local/sent"
-    c.subscribe(topic)
-    c.subscribe(log_topic)
-    print(f"{C}Listening on {topic}{R}")
-    print(f"{C}Listening on {log_topic}{R}")
-    print(f"{D}NODE_ID={NODE_ID}{R}\n")
+    if rc == 0:
+        topic = f"{ROOT}/2/e/{CHANNEL}/#"
+        log_topic = f"{ROOT}/2/local/sent"
+        c.subscribe(topic)
+        c.subscribe(log_topic)
+        print(f"{C}Listening on {topic}{R}")
+        print(f"{C}Listening on {log_topic}{R}")
+        print(f"{D}NODE_ID={NODE_ID}{R}\n")
+    else:
+        print(f"{RD}Connection failed with code {rc}{R}", flush=True)
+
+# ИСПРАВЛЕНО: добавлен аргумент flags (f)
+def on_disconnect(c, u, f, rc, p=None):
+    print(f"{RD}Disconnected from broker! Reason code: {rc}{R}", flush=True)
 
 def on_message(c, u, msg):
     if msg.topic.endswith("/local/sent"):
@@ -158,9 +168,12 @@ def on_message(c, u, msg):
         print(f"{RD}parse error: {e}{R}", flush=True)
 
 load_cache()
-client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+
+client_id = f"mon-{uuid.uuid4().hex[:8]}"
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id, clean_session=False)
 client.username_pw_set(USERNAME, PASSWORD)
 client.on_connect = on_connect
+client.on_disconnect = on_disconnect
 client.on_message = on_message
 client.connect(BROKER, PORT, 60)
 

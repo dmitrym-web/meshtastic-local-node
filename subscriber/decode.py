@@ -1,6 +1,7 @@
 import os
 import json
 import base64
+import uuid
 import paho.mqtt.client as mqtt
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
@@ -41,6 +42,8 @@ def save_cache():
         os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
         with open(CACHE_FILE, "w") as f:
             json.dump(NODES, f)
+        st = os.stat("/data")
+        os.chown(CACHE_FILE, st.st_uid, st.st_gid)
     except Exception as e:
         print(f"Cache save error: {e}", flush=True)
 
@@ -108,7 +111,9 @@ def on_message(client, userdata, msg):
         print(f"Decode error: {e}", flush=True)
 
 load_cache()
-client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+
+client_id = f"dec-{uuid.uuid4().hex[:8]}"
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id=client_id, clean_session=False)
 client.username_pw_set(USERNAME, PASSWORD)
 client.on_connect = on_connect
 client.on_message = on_message
