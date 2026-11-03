@@ -1,29 +1,43 @@
 import os
 import time
-import paho.mqtt.client as mqtt
 import meshtastic
 from meshtastic.tcp_interface import TCPInterface
 
 TEXT = os.environ["MSG_TEXT"]
 CH = int(os.environ.get("CHANNEL_INDEX", "0"))
-BROKER = os.environ["MQTT_BROKER"]
-MQTT_PORT = int(os.environ.get("MQTT_PORT", 1883))
-USERNAME = os.environ["MQTT_USERNAME"]
-PASSWORD = os.environ["MQTT_PASSWORD"]
-ROOT = os.environ["MQTT_ROOT_TOPIC"]
-NODE_ID = os.environ.get("NODE_ID", "")
 VN_PORT = int(os.environ.get("MESHMONITOR_VIRTUAL_NODE_PORT", 4404))
 
-log_topic = f"{ROOT}/2/local/sent"
+MAX_BYTES = 150
 
-client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
-client.username_pw_set(USERNAME, PASSWORD)
-client.connect(BROKER, MQTT_PORT, 60)
-client.loop_start()
-client.publish(log_topic, f"{NODE_ID}|{TEXT}".encode(), qos=1)
-time.sleep(0.5)
-client.loop_stop()
-client.disconnect()
+def split_text(text, max_bytes):
+    chunks = []
+    while text:
+        if len(text.encode('utf-8')) <= max_bytes:
+            chunks.append(text)
+            break
+        
+        current_bytes = 0
+        cut_index = 0
+        for i, char in enumerate(text):
+            char_len = len(char.encode('utf-8'))
+            if current_bytes + char_len > max_bytes:
+                break
+            current_bytes += char_len
+            cut_index = i + 1
+        
+        chunk = text[:cut_index]
+        last_space = chunk.rfind(' ')
+        if last_space > 0:
+            chunk = chunk[:last_space]
+            text = text[len(chunk):].lstrip()
+        else:
+            text = text[cut_index:]
+        
+        if chunk:
+            chunks.append(chunk)
+    return chunks
+
+chunks = split_text(TEXT, MAX_BYTES)
 
 interface = None
 for _ in range(24):
@@ -40,6 +54,10 @@ for _ in range(24):
 if not interface:
     raise Exception("Не удалось подключиться к MeshMonitor")
 
-interface.sendText(TEXT, channelIndex=CH)
+for i, chunk in enumerate(chunks):
+    if i > 0:
+        time.sleep(5)
+    interface.sendText(chunk, channelIndex=CH)
+
 time.sleep(2)
 interface.close()
