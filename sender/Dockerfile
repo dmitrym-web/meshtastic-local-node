@@ -6,5 +6,6 @@ RUN pip install --no-cache-dir meshtastic paho-mqtt apscheduler
 COPY send.py /send.py
 COPY set-position.py /set-position.py
 COPY scheduler.py /scheduler.py
+COPY lib.py /lib.py
 
 CMD ["python3", "-u", "/scheduler.py"]

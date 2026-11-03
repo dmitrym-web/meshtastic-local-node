@@ -75,10 +75,10 @@ send-every: ## Отправлять с интервалом
 	@bash scripts/send-every.sh
 
 set-position: ## Задать координаты: make set-position LAT=45.03 LON=38.97 ALT=30
-	@docker exec mqtt-sender python3 /set-position.py $(LAT) $(LON) $(ALT)
+	@docker exec mqtt-sender python3 /set-position.py $(LAT) $(LON) $(ALT) || true
 
 ping: ## Отправить ping
-	@docker exec -e MSG_TEXT="ping" mqtt-sender python3 /send.py
+	@docker exec -e MSG_TEXT="ping" mqtt-sender python3 /send.py || true
 
 stop: ## Удалить задание по имени
 	@bash scripts/stop.sh
