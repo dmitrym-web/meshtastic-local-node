@@ -4,5 +4,6 @@ RUN pip install --no-cache-dir paho-mqtt meshtastic cryptography
 
 COPY decode.py /decode.py
 COPY monitor.py /monitor.py
+COPY meshlib.py /meshlib.py
 
 CMD ["python3", "/decode.py"]

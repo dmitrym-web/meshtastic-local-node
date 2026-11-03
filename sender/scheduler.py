@@ -10,8 +10,9 @@ from apscheduler.triggers.date import DateTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
-JOBS_DIR = "/app/jobs"
 TZ = os.environ.get("TZ", "Europe/Moscow")
+JOBS_DIR = os.environ.get("JOBS_DIR", "/app/jobs")
+SCHEDULER_SYNC_INTERVAL = int(os.environ.get("SCHEDULER_SYNC_INTERVAL", "2"))
 scheduler = BackgroundScheduler(timezone=TZ)
 
 job_hashes = {}
@@ -107,7 +108,7 @@ def sync_jobs():
                         
                     scheduler.add_job(execute_job, trigger, args=[name], id=name)
             except Exception as e:
-                logging.error(f"Failed to schedule {name}: {e}")
+                logging.error(f"Ошибка планирования {name}: {e}")
                 job_hashes.pop(name, None)
 
     for name in list(job_hashes.keys()):
@@ -122,4 +123,4 @@ logging.info(f"Планировщик запущен. Часовой пояс: {
 
 while True:
     sync_jobs()
-    time.sleep(2)
+    time.sleep(SCHEDULER_SYNC_INTERVAL)
