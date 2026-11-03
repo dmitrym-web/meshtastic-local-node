@@ -2,22 +2,44 @@ DOCKER_COMPOSE = docker compose
 
 .DEFAULT_GOAL := help
 
-.PHONY: help env detect-node up down logs sub-log monitor recreate send send-at send-every set-position ping stop list backup restore
+.PHONY: help requirement env up down logs sub-log monitor recreate send send-at send-every set-position ping stop list backup restore
 
 help: ## Показать список команд
 	@echo "Доступные команды:"
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  make %-15s %s\n", $$1, $$2}'
 
-env: ## Создать .env и определить ноду
-	@if [ -f .env ]; then echo ".env уже существует"; exit 1; fi
-	@cp .env.example .env
-	@sed -i "s/^PUID=.*/PUID=$$(id -u)/" .env
-	@sed -i "s/^PGID=.*/PGID=$$(id -g)/" .env
-	@bash scripts/detect-node.sh
+requirement: ## Проверить зависимости системы
+	@bash scripts/requirement.sh
 
-detect-node: ## Определить ноду и обновить .env
-	@bash scripts/detect-node.sh
+env: ## Создать .env и определить ноду
+	@bash -c ' \
+		if ! bash scripts/requirement.sh; then \
+			exit 0; \
+		fi; \
+		if [ -f .env ]; then \
+			echo -n "Файл .env существует. Перезаписать? (y/n): "; \
+			read ans < /dev/tty; \
+			if [ "$$ans" != "y" ] && [ "$$ans" != "Y" ]; then \
+				echo "Файл .env не перезаписан."; \
+				exit 0; \
+			fi; \
+		fi; \
+		echo "Поиск ноды..."; \
+		NODE_INFO=$$(bash scripts/detect-node.sh); \
+		if [ $$? -eq 0 ]; then \
+			if [ -f .env ]; then mv .env .env.bak; fi; \
+			cp .env.example .env; \
+			sed -i "s/^PUID=.*/PUID=$$(id -u)/" .env; \
+			sed -i "s/^PGID=.*/PGID=$$(id -g)/" .env; \
+			PORT=$$(echo "$$NODE_INFO" | grep "SERIAL_PORT=" | cut -d= -f2); \
+			NODE_ID=$$(echo "$$NODE_INFO" | grep "NODE_ID=" | cut -d= -f2); \
+			sed -i "s|^SERIAL_PORT=.*|SERIAL_PORT=$$PORT|" .env; \
+			sed -i "s|^NODE_ID=.*|NODE_ID=$$NODE_ID|" .env; \
+			echo "Готово. Не забудьте заполнить MQTT_BROKER, MQTT_USERNAME и MQTT_PASSWORD в файле .env."; \
+		else \
+			echo "Настройки .env не изменены."; \
+		fi'
 
 up: ## Собрать и запустить
 	@mkdir -p meshmonitor-data

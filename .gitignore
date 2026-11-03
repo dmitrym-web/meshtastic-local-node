@@ -1,5 +1,6 @@
 .idea
 .env
+.env.bak
 local/
 meshmonitor-data/
 subscriber-data/
